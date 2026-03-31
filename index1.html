@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GiftsCheap | Prime41k</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* ГЛОБАЛЬНЫЕ АНИМАЦИИ */
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 5px rgba(255,215,0,0.3), inset 0 0 5px rgba(255,215,0,0.1); }
+            100% { box-shadow: 0 0 30px rgba(255,215,0,0.8), inset 0 0 15px rgba(255,215,0,0.4); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Inter', sans-serif;
+        }
+        body {
+            background: radial-gradient(ellipse at 30% 20%, #0a0a2a, #0f0c29, #1a1a3a);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 85px;
+            position: relative;
+        }
+        .page {
+            display: none;
+            padding: 20px;
+            overflow-y: auto;
+            height: 100%;
+            scroll-behavior: smooth;
+            position: relative;
+            z-index: 2;
+        }
+        .page.active { display: block; animation: fadeInUp 0.5s cubic-bezier(0.2,0.9,0.4,1.1); }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* ГЛАССМОРФИЗМ 3.0 */
+        .glass-card {
+            background: rgba(10, 10, 30, 0.3);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 40px;
+            padding: 22px;
+            margin-bottom: 18px;
+            transition: all 0.4s cubic-bezier(0.2,0.8,0.4,1);
+            animation: glowPulse 4s infinite alternate;
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(115deg, transparent 30%, rgba(255,215,0,0.1) 50%, transparent 70%);
+            transform: rotate(25deg);
+            animation: shimmer 6s infinite linear;
+            background-size: 200% 100%;
+            pointer-events: none;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            border-color: rgba(255,215,0,0.5);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        /* БАЛАНС */
+        .balance-section { text-align: center; }
+        .balance-amount {
+            font-size: 68px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FFD966, #FFA500, #FFD700, #FFA500);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shimmer 3s infinite linear;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        /* СТАТИСТИКА */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 28px;
+            padding: 16px 8px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-3px); border-color: rgba(255,215,0,0.5); }
+        .stat-val { font-size: 28px; font-weight: 800; color: #FFD966; text-shadow: 0 0 8px rgba(255,215,0,0.5); }
+        /* ПОДАРКИ — ИСПРАВЛЕНА ЦЕНА */
+        .gift-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 34px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2,0.9,0.4,1.1);
+            position: relative;
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+        .gift-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .gift-item:hover::before { left: 100%; }
+        .gift-item:active { transform: scale(0.97); background: rgba(255,215,0,0.08); }
+        .gift-icon { font-size: 44px; width: 60px; text-align: center; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); flex-shrink: 0; }
+        .gift-details { flex: 1; min-width: 120px; }
+        .gift-title { font-weight: 800; font-size: 16px; }
+        .gift-desc { font-size: 11px; opacity: 0.7; }
+        .gift-price {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #1a1a2e;
+            white-space: nowrap;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .vip-price { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; }
+        @media (max-width: 500px) {
+            .gift-price { font-size: 10px; padding: 4px 10px; }
+            .gift-icon { font-size: 38px; width: 50px; }
+            .gift-title { font-size: 14px; }
+        }
+        /* НАВИГАЦИЯ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 420px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255,215,0,0.4);
+            border-radius: 60px;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 8px;
+            z-index: 100;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 14px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nav-btn.active {
+            color: #FFD700;
+            background: rgba(255,215,0,0.2);
+            transform: translateY(-2px);
+        }
+        .nav-icon { font-size: 26px; }
+        .nav-label { font-size: 11px; font-weight: 600; }
+        /* УВЕДОМЛЕНИЯ */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: linear-gradient(135deg, #10b981, #059669);
+            backdrop-filter: blur(20px);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-size: 15px;
+            font-weight: 700;
+            z-index: 2000;
+            transition: transform 0.4s cubic-bezier(0.2,0.9,0.4,1.2);
+            white-space: nowrap;
+            box-shadow: 0 0 30px rgba(16,185,129,0.6);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 0 30px rgba(239,68,68,0.6); }
+        /* ОНЛАЙН-БАДЖ */
+        .online-badge {
+            position: fixed;
+            top: 14px;
+            right: 16px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(16px);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(255,215,0,0.4);
+            z-index: 99;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .online-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.2s infinite;
+            box-shadow: 0 0 6px #10b981;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+        /* КОНФЕТТИ */
+        .confetti {
+            position: fixed;
+            width: 8px;
+            height: 12px;
+            background: #FFD700;
+            top: -10px;
+            animation: confettiFall linear forwards;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        /* КОД И КНОПКИ */
+        .code-block {
+            background: rgba(0,0,0,0.5);
+            border-radius: 28px;
+            padding: 16px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 22px;
+            letter-spacing: 4px;
+            margin: 14px 0;
+            border: 1px solid rgba(255,215,0,0.4);
+        }
+        .btn-copy, .btn-action {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            padding: 14px;
+            border-radius: 50px;
+            font-weight: 800;
+            color: #1a1a2e;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            font-size: 15px;
+        }
+        .btn-copy:active, .btn-action:active { transform: scale(0.97); }
+        input {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,215,0,0.4);
+            padding: 14px;
+            border-radius: 50px;
+            color: white;
+            width: 100%;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .list-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .spacer { height: 80px; }
+    </style>
+</head>
+<body>
+    <div class="online-badge" id="onlineBadge">
+        <span class="online-dot"></span>
+        <span id="onlineCount">0</span> онлайн
+    </div>
+    <div id="toast" class="toast">✨</div>
+    <div id="confettiContainer"></div>
+
+    <!-- СТРАНИЦЫ -->
+    <div id="page-shop" class="page active">
+        <div class="glass-card balance-section">
+            <div class="balance-label" style="opacity:0.8;">ТВОЙ БАЛАНС</div>
+            <div class="balance-amount" id="balanceDisplay">0 ⭐</div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-val" id="refCount">0</div><div>Друзей</div></div>
+            <div class="stat-card"><div class="stat-val" id="buyCount">0</div><div>Покупок</div></div>
+            <div class="stat-card"><div class="stat-val" id="vipBadge">📌</div><div>Статус</div></div>
+        </div>
+        <div class="glass-card">
+            <h3 style="margin-bottom: 18px;">🎁 ЭКСКЛЮЗИВНЫЕ ПОДАРКИ</h3>
+            <div class="gift-item" onclick="handleBuy('bear')">
+                <div class="gift-icon">🧸</div>
+                <div class="gift-details">
+                    <div class="gift-title">Плюшевый Мишка</div>
+                    <div class="gift-desc">Классика любви</div>
+                </div>
+                <div class="gift-price" id="priceBear">150 ⭐ / 15₽</div>
+            </div>
+            <div class="gift-item" onclick="handleBuy('romantic')">
+                <div class="gift-icon">💝</div>
+                <div class="gift-details">
+                    <div class="gift-title">Романтический</div>
+                    <div class="gift-desc">Для особых моментов</div>
+                </div>
+                <div class="gift-price" id="priceRomantic">150 ⭐ / 15₽</div>
+            </div>
+            <div class="gift-item" onclick="handleBuy('support')">
+                <div class="gift-icon">🤝</div>
+                <div class="gift-details">
+                    <div class="gift-title">Поддержка проекта</div>
+                    <div class="gift-desc">Спасибо за вклад</div>
+                </div>
+                <div class="gift-price" style="background:linear-gradient(135deg,#10b981,#059669)">30 ₽</div>
+            </div>
+        </div>
+        <div class="glass-card" style="text-align:center; font-size:13px;">
+            🔥 Секретные коды в канале <a href="https://t.me/prime_1edits" target="_blank" style="color:#FFD700; font-weight:700;">@prime_1edits</a>
+        </div>
+        <div class="spacer"></div>
+    </div>
+
+    <div id="page-history" class="page"><div class="glass-card"><h3>📜 ИСТОРИЯ ПОДАРКОВ</h3><div id="historyList"></div></div><div class="spacer"></div></div>
+    <div id="page-referrals" class="page">
+        <div class="glass-card"><h3>👥 РЕФЕРАЛЬНАЯ СЕТЬ</h3>
+            <div class="list-row"><span>Всего друзей:</span><span id="totalRefs">0</span></div>
+            <div class="list-row"><span>Заработано:</span><span id="earnedStars">0 ⭐</span></div>
+            <div class="code-block" id="refCodeDisplay">LOADING</div>
+            <button class="btn-copy" onclick="copyRefCode()">📋 КОПИРОВАТЬ КОД</button>
+            <div style="font-size:12px; text-align:center; margin-top:12px;">⚡ Друг пишет: <strong>/ref ТВОЙ_КОД</strong></div>
+        </div><div class="spacer"></div>
+    </div>
+    <div id="page-profile" class="page">
+        <div class="glass-card" style="text-align:center;">
+            <div style="font-size:70px;">👑</div>
+            <h2 id="profileName">User</h2>
+            <div class="list-row"><span>⭐ БАЛАНС</span><span id="profileBalance">0 ⭐</span></div>
+            <div class="list-row"><span>👑 VIP ДО</span><span id="vipUntil">нет</span></div>
+            <div class="list-row"><span>🎲 ЛОТЕРЕЯ</span><span id="lotteryStatus">❌</span></div>
+        </div>
+        <div class="glass-card">
+            <h3>🎁 ЕЖЕДНЕВНЫЙ БОНУС</h3>
+            <div id="dailyBonusStatus" class="list-row"></div>
+            <button class="btn-action" style="width:100%; margin-top:12px;" onclick="claimDailyBonus()">🎲 ЗАБРАТЬ БОНУС</button>
+        </div>
+        <div class="glass-card">
+            <h3>🎫 АКТИВИРОВАТЬ ПРОМОКОД</h3>
+            <input type="text" id="promoInput" placeholder="Введите код">
+            <button class="btn-action" style="width:100%;" onclick="activatePromo()">АКТИВИРОВАТЬ</button>
+            <div id="promoResult" style="margin-top:12px;"></div>
+        </div>
+        <div class="spacer"></div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-page="shop"><span class="nav-icon">🎁</span><span class="nav-label">МАГАЗИН</span></button>
+        <button class="nav-btn" data-page="history"><span class="nav-icon">📜</span><span class="nav-label">ИСТОРИЯ</span></button>
+        <button class="nav-btn" data-page="referrals"><span class="nav-icon">👥</span><span class="nav-label">ДРУЗЬЯ</span></button>
+        <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span class="nav-label">ПРОФИЛЬ</span></button>
+    </nav>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        tg.setHeaderColor('#0f0c29');
+        const userId = tg.initDataUnsafe?.user?.id || 8211976202;
+        const userName = tg.initDataUnsafe?.user?.first_name || "Гость";
+        const MANAGER = "prime41ks";
+        
+        let userData = {
+            balance: 0, referrals: 0, purchases: 0, code: "PRIME" + Math.floor(Math.random()*900+100),
+            history: [], vipUntil: 0, dailyBonusLast: 0, dailyStreak: 0, lotteryParticipated: false
+        };
+        let allUsers = [{ id: userId, data: userData }];
+        let onlineUsers = new Set();
+        let promoCodes = { "HSJWVY": { used: false }, "PRIME123": { used: false }, "SECRET50": { used: false } };
+
+        function loadData() {
+            let saved = localStorage.getItem('gc_data');
+            if(saved) try { userData = { ...userData, ...JSON.parse(saved) }; } catch(e) {}
+            let savedUsers = localStorage.getItem('gc_users');
+            if(savedUsers) try { allUsers = JSON.parse(savedUsers); } catch(e) {}
+            if(!allUsers.some(u=>u.id===userId)) allUsers.push({ id: userId, data: userData });
+            else allUsers = allUsers.map(u=>u.id===userId ? {...u, data:userData} : u);
+            onlineUsers.add(userId);
+            updateOnlineCount();
+        }
+        function saveData() { localStorage.setItem('gc_data', JSON.stringify(userData)); }
+        function saveAllUsers() { localStorage.setItem('gc_users', JSON.stringify(allUsers)); }
+        function updateOnlineCount() { document.getElementById('onlineCount').innerText = onlineUsers.size; }
+        setInterval(() => { onlineUsers.clear(); onlineUsers.add(userId); updateOnlineCount(); }, 30000);
+        
+        function isVIP() { return userData.vipUntil > Date.now(); }
+        function getPrice(original) { return isVIP() ? Math.floor(original * 0.9) : original; }
+        function showToast(msg, isError=false) {
+            let toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = `toast ${isError ? 'error' : ''} show`;
+            setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+        function createConfetti() {
+            for(let i=0;i<70;i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + '%';
+                conf.style.width = Math.random() * 8 + 4 + 'px';
+                conf.style.height = Math.random() * 12 + 8 + 'px';
+                conf.style.background = `hsl(${Math.random() * 60 + 40}, 100%, 60%)`;
+                conf.style.animationDuration = Math.random() * 2 + 1.5 + 's';
+                conf.style.animationDelay = Math.random() * 0.5 + 's';
+                document.getElementById('confettiContainer').appendChild(conf);
+                setTimeout(() => conf.remove(), 3000);
+            }
+        }
+        function renderAll() {
+            document.getElementById('balanceDisplay').innerText = `${userData.balance} ⭐`;
+            document.getElementById('refCount').innerText = userData.referrals;
+            document.getElementById('buyCount').innerText = userData.purchases;
+            document.getElementById('vipBadge').innerHTML = isVIP() ? "👑 VIP" : "📌";
+            document.getElementById('profileName').innerText = userName;
+            document.getElementById('profileBalance').innerText = `${userData.balance} ⭐`;
+            document.getElementById('vipUntil').innerHTML = isVIP() ? new Date(userData.vipUntil).toLocaleDateString() : "нет";
+            document.getElementById('lotteryStatus').innerHTML = userData.lotteryParticipated ? "✅ Участвуешь" : "❌ Нет";
+            document.getElementById('totalRefs').innerText = userData.referrals;
+            document.getElementById('earnedStars').innerText = `${userData.referrals*50} ⭐`;
+            document.getElementById('refCodeDisplay').innerText = userData.code;
+            let historyHtml = userData.history.length ? userData.history.map(h=>`<div class="list-row"><div><b>${h.gift}</b><div style="font-size:10px;">${h.date}</div></div><div>${h.price}</div></div>`).join('') : '<div style="text-align:center;">📭 Нет покупок</div>';
+            document.getElementById('historyList').innerHTML = historyHtml;
+            let canClaim = userData.dailyBonusLast !== new Date().toDateString();
+            let streak = userData.dailyStreak || 0;
+            document.getElementById('dailyBonusStatus').innerHTML = canClaim ? `🎁 +5⭐ (серия: ${streak})` : `✅ Бонус сегодня (серия: ${streak})`;
+            let p = getPrice(150);
+            document.getElementById('priceBear').innerText = `${p} ⭐ / 15₽`;
+            document.getElementById('priceRomantic').innerText = `${p} ⭐ / 15₽`;
+            saveData();
+        }
+        function claimDailyBonus() {
+            let today = new Date().toDateString();
+            if(userData.dailyBonusLast === today) { showToast("Сегодня уже забирал!", true); return; }
+            let yesterday = new Date(Date.now()-86400000).toDateString();
+            let streak = (userData.dailyBonusLast === yesterday) ? (userData.dailyStreak||0)+1 : 1;
+            let bonus = 5;
+            if(streak === 7) { bonus = 30; streak = 0; createConfetti(); showToast("🔥 7 дней! +30⭐ и конфетти!", false); }
+            else showToast(`+${bonus}⭐! Серия: ${streak}`, false);
+            userData.balance += bonus;
+            userData.dailyStreak = streak;
+            userData.dailyBonusLast = today;
+            renderAll();
+        }
+        function handleBuy(type) {
+            let name = type==='bear'?'Мишка':type==='romantic'?'Романтика':'Поддержка';
+            let price = type==='support' ? '30 ₽' : `${getPrice(150)} ⭐ / 15₽`;
+            tg.showPopup({ title: '🎁 Подарок', message: `Вы выбрали: ${name}\n💰 ${price}\n\n📩 Оплата: @${MANAGER}`, buttons: [{type:'ok'}] });
+            userData.history.unshift({ gift: `${name} (ожидание)`, price: price, date: new Date().toLocaleDateString() });
+            if(!userData.lotteryParticipated) {
+                userData.lotteryParticipated = true;
+                createConfetti();
+                showToast("🎲 Вы участвуете в розыгрыше VIP!", false);
+            }
+            renderAll();
+        }
+        function activatePromo() {
+            let code = document.getElementById('promoInput').value.trim().toUpperCase();
+            if(!code) return;
+            if(!promoCodes[code]) { document.getElementById('promoResult').innerHTML = '<span style="color:#f87171">❌ Неверный</span>'; return; }
+            if(promoCodes[code].used) { document.getElementById('promoResult').innerHTML = '<span style="color:#f87171">❌ Уже использован</span>'; return; }
+            promoCodes[code].used = true;
+            userData.balance += 50;
+            renderAll();
+            createConfetti();
+            document.getElementById('promoResult').innerHTML = '<span style="color:#4ade80">✅ +50⭐</span>';
+            setTimeout(()=>document.getElementById('promoResult').innerHTML='',2000);
+        }
+        function copyRefCode() { navigator.clipboard.writeText(userData.code); showToast("Код скопирован!", false); createConfetti(); }
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(`page-${btn.dataset.page}`).classList.add('active');
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+        });
+        loadData();
+        renderAll();
+    </script>
+</body>
+</html>
