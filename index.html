@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GiftsCheap Bot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Эффект жидкого стекла */
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .page {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Шапка */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        /* Баланс карточка */
+        .balance-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            backdrop-filter: blur(12px);
+            border-radius: 25px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .balance-card h3 {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .balance-amount {
+            font-size: 42px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        /* Статистика */
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        /* Кнопки меню */
+        .menu-btn {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 16px;
+            border-radius: 20px;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.02);
+        }
+        
+        .menu-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-emoji {
+            font-size: 28px;
+            width: 45px;
+        }
+        
+        /* Карточки подарков */
+        .gift-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s;
+        }
+        
+        .gift-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .gift-emoji {
+            font-size: 52px;
+            width: 75px;
+            text-align: center;
+        }
+        
+        .gift-info {
+            flex: 1;
+        }
+        
+        .gift-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .gift-desc {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        
+        .gift-prices {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .price-star {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .price-rub {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .dev-card {
+            background: linear-gradient(135deg, rgba(245, 87, 108, 0.2), rgba(240, 147, 251, 0.2));
+            border: 1px solid rgba(245, 87, 108, 0.5);
+        }
+        
+        /* Кнопка назад */
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Промо блок */
+        .promo-block {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 15px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .promo-icon {
+            font-size: 36px;
+        }
+        
+        .promo-text {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .promo-text a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        
+        /* Код */
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 20px;
+            letter-spacing: 2px;
+            margin: 15px 0;
+        }
+        
+        .copy-btn {
+            background: #4ade80;
+            border: none;
+            color: #1a1a2e;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        /* Список */
+        .list-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .rank-number {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            opacity: 0.7;
+        }
+        
+        .loading::after {
+            content: "...";
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: "."; }
+            40% { content: ".."; }
+            60%, 100% { content: "..."; }
+        }
+        
+        input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 14px;
+            border-radius: 30px;
+            color: white;
+            width: 100%;
+            font-size: 16px;
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .promo-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .promo-input button {
+            background: #ffd700;
+            border: none;
+            padding: 0 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            color: #1a1a2e;
+            cursor: pointer;
+        }
+        
+        .success {
+            color: #4ade80;
+        }
+        
+        .error {
+            color: #f87171;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <!-- ==================== ГЛАВНОЕ МЕНЮ ==================== -->
+        <div id="mainMenu" class="page">
+            <div class="header glass">
+                <h1>🐻 GiftsCheap</h1>
+            </div>
+            
+            <div class="balance-card">
+                <h3>💰 ТВОЙ БАЛАНС</h3>
+                <div class="balance-amount" id="balanceAmount">0 ⭐</div>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="referralsCount">0</div>
+                    <div class="stat-label">РЕФЕРАЛОВ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="purchasesCount">0</div>
+                    <div class="stat-label">ПОКУПОК</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="rankValue">📌</div>
+                    <div class="stat-label">СТАТУС</div>
+                </div>
+            </div>
+            
+            <div class="glass" style="padding: 5px;">
+                <button class="menu-btn" onclick="showPage('shop')">
+                    <span class="btn-emoji">🎁</span>
+                    <span>Купить подарок</span>
+                </button>
+                <button class="menu-btn" onclick="showPage('profile')">
+                    <span class="btn-emoji">👤</span>
+                    <span>Мой профиль</span>
+                </button>
+                <button class="menu-btn" onclick="showPage('referrals')">
+                    <span class="btn-emoji">👥</span>
+                    <span>Мои рефералы</span>
+                </button>
+                <button class="menu-btn" onclick="showPage('history')">
+                    <span class="btn-emoji">📜</span>
+                    <span>История покупок</span>
+                </button>
+                <button class="menu-btn" onclick="showPage('top')">
+                    <span class="btn-emoji">🏆</span>
+                    <span>Топ рефералов</span>
+                </button>
+                <button class="menu-btn" onclick="showPage('promo')">
+                    <span class="btn-emoji">🎫</span>
+                    <span>Промокод</span>
+                </button>
+                <button class="menu-btn" onclick="showPage('code')">
+                    <span class="btn-emoji">🔑</span>
+                    <span>Мой код</span>
+                </button>
+                <button class="menu-btn" onclick="closeApp()">
+                    <span class="btn-emoji">❌</span>
+                    <span>Закрыть</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- ==================== МАГАЗИН ==================== -->
+        <div id="shopPage" class="page hidden">
+            <button class="back-btn" onclick="showPage('main')">← Назад</button>
+            
+            <div class="gift-card">
+                <div class="gift-emoji">🧸</div>
+                <div class="gift-info">
+                    <div class="gift-name">Мишка</div>
+                    <div class="gift-desc">Классический милый подарок</div>
+                </div>
+                <div class="gift-prices">
+                    <button class="price-star" onclick="buyGift('bear', 'stars')">⭐ 150</button>
+                    <button class="price-rub" onclick="buyGift('bear', 'rub')">₽ 15</button>
+                </div>
+            </div>
+            
+            <div class="gift-card">
+                <div class="gift-emoji">💝</div>
+                <div class="gift-info">
+                    <div class="gift-name">Романтичный</div>
+                    <div class="gift-desc">Для особенных моментов</div>
+                </div>
+                <div class="gift-prices">
+                    <button class="price-star" onclick="buyGift('romantic', 'stars')">⭐ 150</button>
+                    <button class="price-rub" onclick="buyGift('romantic', 'rub')">₽ 15</button>
+                </div>
+            </div>
+            
+            <div class="gift-card dev-card">
+                <div class="gift-emoji">🤝</div>
+                <div class="gift-info">
+                    <div class="gift-name">Отблагодарить разраба</div>
+                    <div class="gift-desc">Поддержать проект</div>
+                </div>
+                <div class="gift-prices">
+                    <button class="price-rub" onclick="buyGift('dev', 'rub')">₽ 30</button>
+                </div>
+            </div>
+            
+            <div class="promo-block">
+                <div class="promo-icon">🎫</div>
+                <div class="promo-text">
+                    <strong>Промокоды в нашем канале!</strong><br>
+                    Подпишись и получай скидки: <a href="https://t.me/prime_1edits" target="_blank">@prime_1edits</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== ПРОФИЛЬ ==================== -->
+        <div id="profilePage" class="page hidden">
+            <button class="back-btn" onclick="showPage('main')">← Назад</button>
+            <div class="glass" style="padding: 20px;" id="profileContent">
+                <div class="loading">Загрузка</div>
+            </div>
+        </div>
+        
+        <!-- ==================== РЕФЕРАЛЫ ==================== -->
+        <div id="referralsPage" class="page hidden">
+            <button class="back-btn" onclick="showPage('main')">← Назад</button>
+            <div class="glass" style="padding: 20px;" id="referralsContent">
+                <div class="loading">Загрузка</div>
+            </div>
+        </div>
+        
+        <!-- ==================== ИСТОРИЯ ==================== -->
+        <div id="historyPage" class="page hidden">
+            <button class="back-btn" onclick="showPage('main')">← Назад</button>
+            <div class="glass" style="padding: 20px;" id="historyContent">
+                <div class="loading">Загрузка</div>
+            </div>
+        </div>
+        
+        <!-- ==================== ТОП ==================== -->
+        <div id="topPage" class="page hidden">
+            <button class="back-btn" onclick="showPage('main')">← Назад</button>
+            <div class="glass" style="padding: 20px;" id="topContent">
+                <div class="loading">Загрузка</div>
+            </div>
+        </div>
+        
+        <!-- ==================== ПРОМОКОД ==================== -->
+        <div id="promoPage" class="page hidden">
+            <button class="back-btn" onclick="showPage('main')">← Назад</button>
+            <div class="glass" style="padding: 20px;">
+                <h3 style="margin-bottom: 20px;">🎫 Активировать промокод</h3>
+                <div class="promo-input">
+                    <input type="text" id="promoCode" placeholder="Введите код">
+                    <button onclick="activatePromo()">Активировать</button>
+                </div>
+                <div id="promoMessage"></div>
+            </div>
+        </div>
+        
+        <!-- ==================== МОЙ КОД ==================== -->
+        <div id="codePage" class="page hidden">
+            <button class="back-btn" onclick="showPage('main')">← Назад</button>
+            <div class="glass" style="padding: 20px;" id="codeContent">
+                <div class="loading">Загрузка</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        
+        let userId = tg.initDataUnsafe?.user?.id || 8211976202;
+        let MANAGER_USERNAME = "prime41ks";
+        
+        // Данные (заглушка, будут подтягиваться от бота)
+        let userData = {
+            balance: 250,
+            referrals: 3,
+            purchases: 2,
+            rank: "⭐ Активный",
+            code: "ABC123",
+            history: [
+                { gift: "🧸 Мишка", recipient: "@anna", price: "150 ⭐", date: "31.03.2026" },
+                { gift: "💝 Романтичный", recipient: "@mike", price: "150 ⭐", date: "28.03.2026" }
+            ],
+            topReferrals: [
+                { name: "Алексей", count: 12 },
+                { name: "Мария", count: 8 },
+                { name: "Денис", count: 5 }
+            ]
+        };
+        
+        function showPage(page) {
+            const pages = ['mainMenu', 'shopPage', 'profilePage', 'referralsPage', 'historyPage', 'topPage', 'promoPage', 'codePage'];
+            pages.forEach(p => {
+                document.getElementById(p).classList.add('hidden');
+            });
+            
+            if (page === 'main') {
+                document.getElementById('mainMenu').classList.remove('hidden');
+                updateMainStats();
+            } else {
+                document.getElementById(`${page}Page`).classList.remove('hidden');
+                loadPageData(page);
+            }
+        }
+        
+        function updateMainStats() {
+            document.getElementById('balanceAmount').innerText = `${userData.balance} ⭐`;
+            document.getElementById('referralsCount').innerText = userData.referrals;
+            document.getElementById('purchasesCount').innerText = userData.purchases;
+            document.getElementById('rankValue').innerHTML = userData.rank;
+        }
+        
+        function loadPageData(page) {
+            const contentMap = {
+                profile: `
+                    <div><strong>👤 Имя:</strong> ${tg.initDataUnsafe?.user?.first_name || 'Пользователь'}</div>
+                    <div style="margin-top: 10px;"><strong>🆔 ID:</strong> ${userId}</div>
+                    <div style="margin-top: 10px;"><strong>📅 Регистрация:</strong> 31.03.2026</div>
+                    <div style="margin-top: 15px;"><strong>👥 Рефералов:</strong> ${userData.referrals}</div>
+                    <div><strong>💰 Баланс:</strong> ${userData.balance} ⭐</div>
+                    <div><strong>🏆 Статус:</strong> ${userData.rank}</div>
+                `,
+                referrals: `
+                    <div><strong>👥 Всего рефералов:</strong> ${userData.referrals}</div>
+                    <div><strong>💰 Заработано:</strong> ${userData.referrals * 50} ⭐</div>
+                    <div style="margin-top: 15px;"><strong>🔑 Твой код:</strong></div>
+                    <div class="code-block">${userData.code}</div>
+                    <button class="copy-btn" onclick="copyCode()">📋 Копировать код</button>
+                    <div style="margin-top: 15px; font-size: 12px;">👉 Друг должен написать /ref ${userData.code}</div>
+                `,
+                history: userData.history.length ? userData.history.map(item => `
+                    <div class="list-item">
+                        <span>🎁 ${item.gift}</span>
+                        <span>👥 ${item.recipient}</span>
+                        <span>💰 ${item.price}</span>
+                    </div>
+                    <div style="font-size: 11px; opacity: 0.6; margin-bottom: 10px;">📅 ${item.date}</div>
+                `).join('') : '<div style="text-align: center; opacity: 0.7;">📭 У вас пока нет покупок</div>',
+                top: userData.topReferrals.length ? userData.topReferrals.map((item, i) => `
+                    <div class="list-item">
+                        <span><span class="rank-number">${i+1}</span>. ${item.name}</span>
+                        <span>${item.count} рефералов</span>
+                    </div>
+                `).join('') : '<div style="text-align: center; opacity: 0.7;">🏆 Пока нет рефералов</div>',
+                code: `
+                    <div><strong>🔑 Твой реферальный код:</strong></div>
+                    <div class="code-block">${userData.code}</div>
+                    <button class="copy-btn" onclick="copyCode()">📋 Копировать код</button>
+                    <div style="margin-top: 15px; font-size: 12px;">👉 Друг должен написать /ref ${userData.code}</div>
+                `
+            };
+            
+            setTimeout(() => {
+                const content = contentMap[page];
+                const contentDiv = document.getElementById(`${page}Content`);
+                if (contentDiv) contentDiv.innerHTML = content;
+            }, 100);
+        }
+        
+        function buyGift(type, currency) {
+            let name, price;
+            if (type === 'bear') {
+                name = 'Мишка';
+                price = currency === 'stars' ? '150 ⭐' : '15 ₽';
+            } else if (type === 'romantic') {
+                name = 'Романтичный подарок';
+                price = currency === 'stars' ? '150 ⭐' : '15 ₽';
+            } else {
+                name = 'Отблагодарить разраба';
+                price = '30 ₽';
+                currency = 'rub';
+            }
+            
+            if (currency === 'rub') {
+                tg.showAlert(`🎁 ${name}\n💰 ${price}\n\n💳 Для оплаты напишите менеджеру: @${MANAGER_USERNAME}`);
+            } else {
+                tg.showAlert(`🎁 ${name}\n💰 ${price}\n\n⭐ Недостаточно звёзд? Приглашай друзей!\n🔗 Твой код: /mycode`);
+            }
+        }
+        
+        function activatePromo() {
+            const code = document.getElementById('promoCode').value;
+            if (!code) {
+                document.getElementById('promoMessage').innerHTML = '<span class="error">❌ Введите код</span>';
+                return;
+            }
+            document.getElementById('promoMessage').innerHTML = '<span class="success">✅ Промокод активирован! +50 ⭐</span>';
+            document.getElementById('promoCode').value = '';
+            setTimeout(() => {
+                document.getElementById('promoMessage').innerHTML = '';
+            }, 3000);
+        }
+        
+        function copyCode() {
+            navigator.clipboard.writeText(userData.code);
+            tg.showPopup({ message: 'Код скопирован!' });
+        }
+        
+        function closeApp() {
+            tg.close();
+        }
+        
+        updateMainStats();
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
